@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block nav %}
+<nav class="docs-sidebar" data-spy="affix" data-offset-top="300" data-offset-bottom="200" role="navigation">
+    <ul class="nav">
+        {% for file in docs %}
+            <li><a class="menu-right-custom" data-element="{{ file }}" href="{{url_for("index", file_name=file, edit="true", add_new="false")}}">Edit</a><a class="menu-left-custom" href="{{url_for("index", file_name=file, edit="false", add_new="false")}}">{{ file.replace("_", " ").split(".")[0].title() }}</a></li>
+        {% endfor %}
+    </ul>
+    <ul class="nav" style="padding-top: 30px;">
+        <li><a class="menu-left-custom" href="{{url_for("index", file_name=current_file, edit="false", add_new="true")}}">Add New Doc</a></li>
+    </ul>
+</nav >
+{% endblock %}
+{% block content %}
+{% if edit.lower()=="false" and add_new.lower()=="false" %}
+    {{ data |safe }}
+{% elif edit.lower()=="true" and add_new.lower()=="false" %}
+    <button id="Save" onclick="functionSave()">Save</button><label id="save_success" style="padding-left: 30px;"></label>
+    <textarea id="mod_area">{{md_data}}</textarea>
+{% else %}
+      <label for="fname">File name:</label>
+      <input type="text" id="fname" name="fname" value="something_doc.md"><br>
+        <textarea id="mod_area"></textarea>
+      <button id="create" onclick="createNew()">Create Doc</button><label id="create_success" style="padding-left: 30px;"></label>
+{% endif %}
+<script>
+    var simplemde = new SimpleMDE();
+
+    function functionSave() {
+        var data = simplemde.value();
+        $.post('/save/{{ current_file }}', data, function (data, statusText, xhr) {
+            if(xhr.status === 200){
+                $( "#save_success" ).html("Success");
+            }
+        }).fail(function(jqXHR){
+            if (jqXHR.status !== 200){
+                $( "#save_success" ).html("Failed");
+            }
+        });
+    }
+    function createNew() {
+        var data = simplemde.value();
+        var file = $("#fname").val()
+        console.log(file)
+        $.post('/create/'+ file, data, function (data, statusText, xhr) {
+            if(xhr.status === 200){
+                $( "#create_success" ).html("Success");
+            }
+        }).fail(function(jqXHR){
+            if (jqXHR.status !== 200){
+                $( "#create_success" ).html("Failed");
+            }
+        });
+    }
+</script>
+{% endblock %}
